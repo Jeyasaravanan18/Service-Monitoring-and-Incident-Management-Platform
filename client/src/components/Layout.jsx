@@ -47,7 +47,7 @@ export function AppShell({ children }) {
       <aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
         <Link to="/" className="brand" onClick={() => setSidebarOpen(false)}>
           <div className="brand-mark" />
-          <span style={{ color: "var(--color-brand)", fontSize: 18, textShadow: "var(--shadow-glow)" }}>PULSEFORGE_</span>
+          <span style={{ color: "var(--color-brand)", fontSize: 18, textShadow: "var(--shadow-glow)" }}>SMIMP_</span>
         </Link>
         <nav style={{ flex: 1, overflowY: "auto", padding: "8px 0" }}>
           {visibleGroups.map((group) => (
@@ -161,7 +161,7 @@ export function Topbar() {
           const nextWorkspaceId = event.target.value || null;
           setWorkspaceId(nextWorkspaceId);
           const session = JSON.parse(
-            localStorage.getItem("pulseforge-user") || "null"
+            localStorage.getItem("smimp-user") || "null"
           );
           if (session) {
             persistSession({ ...session, workspaceId: nextWorkspaceId });
@@ -223,7 +223,7 @@ export function Topbar() {
         type="button"
         onClick={async () => {
           const session = JSON.parse(
-            localStorage.getItem("pulseforge-user") || "null"
+            localStorage.getItem("smimp-user") || "null"
           );
           try {
             await apiPost("/auth/logout", {

@@ -607,7 +607,7 @@ export function PublicStatusPage() {
             
             {/* FOOTER */}
             <footer style={{ marginTop: 80, paddingTop: 32, borderTop: "1px solid var(--color-border-strong)", textAlign: "center", color: "var(--color-text-soft)", fontSize: 13 }}>
-              Powered by <span style={{ color: "var(--color-brand)", letterSpacing: "0.1em" }}>PULSEFORGE</span>
+              Powered by <span style={{ color: "var(--color-brand)", letterSpacing: "0.1em" }}>SMIMP</span>
             </footer>
           </>
         ) : null}
@@ -758,7 +758,7 @@ export function AuditLogsPage() {
     Object.entries(filters).forEach(([key, value]) => {
       if (value) params.set(key, value);
     });
-    const session = JSON.parse(localStorage.getItem("pulseforge-session") || "null");
+    const session = JSON.parse(localStorage.getItem("smimp-session") || "null");
     const headers = {};
     if (session?.token) headers.Authorization = `Bearer ${session.token}`;
     if (session?.workspaceId) headers["X-Workspace-Id"] = session.workspaceId;
@@ -1009,7 +1009,7 @@ export function ProfilePage() {
   const navigate = useNavigate();
   const [overview, setOverview] = useState({ services: [], alerts: [], incidents: [], logs: [] });
   const [workspaces, setWorkspaces] = useState([]);
-  const session = JSON.parse(localStorage.getItem("pulseforge-session") || "null");
+  const session = JSON.parse(localStorage.getItem("smimp-session") || "null");
   const user = session?.user;
   const activeWorkspaceId = session?.workspaceId || user?.workspaceIds?.[0] || null;
 

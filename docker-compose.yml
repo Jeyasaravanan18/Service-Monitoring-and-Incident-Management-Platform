@@ -21,10 +21,10 @@ services:
     environment:
       PORT: 4000
       CLIENT_ORIGIN: http://localhost:4173
-      MONGO_URI: mongodb://mongo:27017/pulseforge
+      MONGO_URI: mongodb://mongo:27017/smimp
       JWT_ACCESS_SECRET: local-access-secret
       JWT_REFRESH_SECRET: local-refresh-secret
-      APP_NAME: PulseForge
+      APP_NAME: Service Monitoring and Incident Management Platform
     ports:
       - "4000:4000"
     depends_on:

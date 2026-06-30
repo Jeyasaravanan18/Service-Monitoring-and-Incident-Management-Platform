@@ -43,7 +43,7 @@ function AuthShell({ children, eyebrow, title, copy }) {
       <div className="auth-card">
         <div className="brand" style={{ marginBottom: 28, padding: 0, border: "none", justifyContent: "center" }}>
           <div className="brand-mark" style={{ width: 24, height: 24 }} />
-          <span style={{ color: "var(--color-brand)", fontSize: 20, letterSpacing: "0.15em", textShadow: "var(--shadow-glow)" }}>PULSEFORGE_</span>
+          <span style={{ color: "var(--color-brand)", fontSize: 20, letterSpacing: "0.15em", textShadow: "var(--shadow-glow)" }}>SMIMP_</span>
         </div>
         {eyebrow && (
           <div style={{

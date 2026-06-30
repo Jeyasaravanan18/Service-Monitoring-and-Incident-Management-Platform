@@ -31,7 +31,7 @@ export const useAppStore = create((set, get) => ({
 
   logout: () => {
     // Remove only non-sensitive persisted data
-    localStorage.removeItem("pulseforge-user");
+    localStorage.removeItem("smimp-user");
     set({ user: null, token: null, refreshToken: null, workspaceId: null });
   },
 }));
@@ -43,7 +43,7 @@ export const useAppStore = create((set, get) => ({
  */
 export function hydrateSession() {
   try {
-    const raw = localStorage.getItem("pulseforge-user");
+    const raw = localStorage.getItem("smimp-user");
     if (!raw) return null;
     const saved = JSON.parse(raw);
     // Restore user & workspaceId but NOT the access token
@@ -66,7 +66,7 @@ export function hydrateSession() {
 export function persistSession(session) {
   try {
     localStorage.setItem(
-      "pulseforge-user",
+      "smimp-user",
       JSON.stringify({
         user: session?.user || null,
         refreshToken: session?.refreshToken || null,

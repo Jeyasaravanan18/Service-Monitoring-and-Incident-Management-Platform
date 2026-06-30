@@ -20,7 +20,7 @@ function getRefreshToken() {
   const memRefresh = useAppStore.getState().refreshToken;
   if (memRefresh) return memRefresh;
   try {
-    const saved = JSON.parse(localStorage.getItem("pulseforge-user") || "null");
+    const saved = JSON.parse(localStorage.getItem("smimp-user") || "null");
     return saved?.refreshToken || null;
   } catch {
     return null;
