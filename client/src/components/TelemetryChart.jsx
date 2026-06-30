@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useMemo, memo } from "react";
 
-export function TelemetryChart({ data = [], width = "100%", height = 120, color = "var(--color-brand)" }) {
+export const TelemetryChart = memo(function TelemetryChart({ data = [], width = "100%", height = 120, color = "var(--color-brand)" }) {
   if (!data || data.length === 0) {
     return <div className="subtle" style={{ height, display: "flex", alignItems: "center", justifyContent: "center" }}>No telemetry data.</div>;
   }
@@ -15,19 +15,21 @@ export function TelemetryChart({ data = [], width = "100%", height = 120, color 
   // Padding for the chart bounds
   const paddingY = 20; 
 
-  // Normalize points to SVG coordinates
-  // viewBox is 0 0 1000 100
-  const points = plotData.map((val, i) => {
-    const x = (i / (plotData.length - 1)) * 1000;
-    // Invert Y because SVG origin is top-left
-    const normalizedY = (val - min) / range;
-    const y = 100 - paddingY - (normalizedY * (100 - paddingY * 2));
-    return `${x},${y}`;
-  });
-
-  const pathD = `M ${points.join(" L ")}`;
-  // Close the path for the area fill
-  const areaD = `${pathD} L 1000,100 L 0,100 Z`;
+  // Normalize points to SVG coordinates using useMemo to avoid recalculation on re-renders
+  const { points, areaD, pathD } = useMemo(() => {
+    const pts = plotData.map((val, i) => {
+      const x = (i / (plotData.length - 1)) * 1000;
+      const normalizedY = (val - min) / range;
+      const y = 100 - paddingY - (normalizedY * (100 - paddingY * 2));
+      return `${x},${y}`;
+    });
+    const pD = `M ${pts.join(" L ")}`;
+    return {
+      points: pts,
+      pathD: pD,
+      areaD: `${pD} L 1000,100 L 0,100 Z`
+    };
+  }, [plotData, min, range, paddingY]);
 
   return (
     <div style={{ width, height, position: "relative" }}>
@@ -68,4 +70,4 @@ export function TelemetryChart({ data = [], width = "100%", height = 120, color 
       <div style={{ position: "absolute", bottom: -8, left: 0, fontSize: 10, color: "var(--color-text-soft)", fontFamily: "'JetBrains Mono', monospace" }}>{Math.round(min)}ms</div>
     </div>
   );
-}
+});

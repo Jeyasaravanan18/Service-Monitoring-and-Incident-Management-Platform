@@ -8,6 +8,23 @@ import { disconnectSocket } from "../lib/socket.js";
 import { Menu, LogOut, Search } from "lucide-react";
 import { CommandPalette } from "./CommandPalette.jsx";
 
+export function ToastContainer() {
+  const toasts = useAppStore((state) => state.toasts);
+  const removeToast = useAppStore((state) => state.removeToast);
+
+  if (!toasts.length) return null;
+
+  return (
+    <div className="toast-container">
+      {toasts.map((toast) => (
+        <div key={toast.id} className={`toast toast-${toast.type}`} onClick={() => removeToast(toast.id)}>
+          {toast.message}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function AppShell({ children }) {
   const user = useAppStore((state) => state.user);
   const workspaceId = useAppStore((state) => state.workspaceId);
@@ -78,6 +95,7 @@ export function AppShell({ children }) {
       </aside>
       <main className="main">{children}</main>
       <CommandPalette />
+      <ToastContainer />
     </div>
   );
 }

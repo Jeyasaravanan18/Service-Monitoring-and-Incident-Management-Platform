@@ -11,6 +11,17 @@ export const useAppStore = create((set, get) => ({
   refreshToken: null, // refresh token — stored in httpOnly cookie on server, kept here as fallback
   workspaceId: null,
   sidebarOpen: false,
+  toasts: [], // Global toast notifications array
+
+  addToast: (message, type = "info") => {
+    const id = Date.now().toString() + Math.random().toString(36).substring(2);
+    set((state) => ({ toasts: [...state.toasts, { id, message, type }] }));
+    setTimeout(() => {
+      set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) }));
+    }, 4000);
+  },
+
+  removeToast: (id) => set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
 
   setSession: (session) =>
     set({
