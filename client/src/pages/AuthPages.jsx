@@ -43,7 +43,7 @@ function AuthShell({ children, eyebrow, title, copy }) {
       <div className="auth-card">
         <div className="brand" style={{ marginBottom: 28, padding: 0, border: "none", justifyContent: "center" }}>
           <div className="brand-mark" style={{ width: 24, height: 24 }} />
-          <span style={{ color: "var(--color-brand)", fontSize: 20, letterSpacing: "0.15em", textShadow: "var(--shadow-glow)" }}>SMIMP_</span>
+          <span style={{ color: "var(--color-brand)", fontSize: 22, fontWeight: 800 }}>SMIMP</span>
         </div>
         {eyebrow && (
           <div style={{
@@ -59,8 +59,8 @@ function AuthShell({ children, eyebrow, title, copy }) {
             [ {eyebrow} ]
           </div>
         )}
-        <h1 style={{ fontSize: 24, fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", marginBottom: 12, textAlign: "center", textShadow: "0 0 10px rgba(255,255,255,0.2)" }}>{title}</h1>
-        <p style={{ color: "var(--color-text-soft)", fontFamily: "'JetBrains Mono', monospace", fontSize: 12, marginBottom: 32, lineHeight: 1.6, textAlign: "center" }}>{copy}</p>
+        <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 12, textAlign: "center", color: "var(--color-text)" }}>{title}</h1>
+        <p style={{ color: "var(--color-text-soft)", fontSize: 16, marginBottom: 32, lineHeight: 1.6, textAlign: "center" }}>{copy}</p>
         {children}
       </div>
     </div>

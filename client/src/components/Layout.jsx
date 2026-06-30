@@ -64,7 +64,7 @@ export function AppShell({ children }) {
       <aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
         <Link to="/" className="brand" onClick={() => setSidebarOpen(false)}>
           <div className="brand-mark" />
-          <span style={{ color: "var(--color-brand)", fontSize: 18, textShadow: "var(--shadow-glow)" }}>SMIMP_</span>
+          <span style={{ color: "var(--color-brand)", fontSize: 20, fontWeight: 800 }}>SMIMP</span>
         </Link>
         <nav style={{ flex: 1, overflowY: "auto", padding: "8px 0" }}>
           {visibleGroups.map((group) => (
@@ -223,17 +223,15 @@ export function Topbar() {
         alignItems: "center",
         gap: 6,
         padding: "6px 12px",
-        background: "rgba(6, 182, 212, 0.1)",
-        border: "1px solid var(--color-brand)",
+        background: "var(--color-brand-muted)",
+        borderRadius: "var(--radius-pill)",
         color: "var(--color-brand)",
-        fontFamily: "'JetBrains Mono', monospace",
-        fontSize: 11,
-        letterSpacing: "0.1em",
+        fontSize: 12,
+        fontWeight: 600,
         textTransform: "uppercase",
-        boxShadow: "var(--shadow-glow)",
       }}>
         <div style={{ width: 6, height: 6, background: "var(--color-brand)", borderRadius: "50%", animation: "pulse-dot 2s infinite" }} />
-        AI CORE
+        Active
       </div>
 
       <button

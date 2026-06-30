@@ -39,10 +39,6 @@ export const TelemetryChart = memo(function TelemetryChart({ data = [], width = 
             <stop offset="0%" stopColor={color} stopOpacity={0.4} />
             <stop offset="100%" stopColor={color} stopOpacity={0.0} />
           </linearGradient>
-          <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="4" result="blur" />
-            <feComposite in="SourceGraphic" in2="blur" operator="over" />
-          </filter>
         </defs>
 
         {/* Grid lines */}
@@ -54,7 +50,7 @@ export const TelemetryChart = memo(function TelemetryChart({ data = [], width = 
         <path d={areaD} fill="url(#areaGradient)" />
 
         {/* Stroke line */}
-        <path d={pathD} fill="none" stroke={color} strokeWidth="3" filter="url(#glow)" strokeLinejoin="round" />
+        <path d={pathD} fill="none" stroke={color} strokeWidth="3" strokeLinejoin="round" />
         
         {/* Plot points */}
         {plotData.map((val, i) => {
@@ -62,12 +58,12 @@ export const TelemetryChart = memo(function TelemetryChart({ data = [], width = 
           const normalizedY = (val - min) / range;
           const y = 100 - paddingY - (normalizedY * (100 - paddingY * 2));
           return (
-            <circle key={i} cx={x} cy={y} r="4" fill={color} stroke="#000" strokeWidth="2" />
+            <circle key={i} cx={x} cy={y} r="4" fill={color} stroke="#ffffff" strokeWidth="2" />
           );
         })}
       </svg>
-      <div style={{ position: "absolute", top: -8, left: 0, fontSize: 10, color: "var(--color-text-soft)", fontFamily: "'JetBrains Mono', monospace" }}>{Math.round(max)}ms</div>
-      <div style={{ position: "absolute", bottom: -8, left: 0, fontSize: 10, color: "var(--color-text-soft)", fontFamily: "'JetBrains Mono', monospace" }}>{Math.round(min)}ms</div>
+      <div style={{ position: "absolute", top: -8, left: 0, fontSize: 10, color: "var(--color-text-soft)", fontFamily: "inherit" }}>{Math.round(max)}ms</div>
+      <div style={{ position: "absolute", bottom: -8, left: 0, fontSize: 10, color: "var(--color-text-soft)", fontFamily: "inherit" }}>{Math.round(min)}ms</div>
     </div>
   );
 });
