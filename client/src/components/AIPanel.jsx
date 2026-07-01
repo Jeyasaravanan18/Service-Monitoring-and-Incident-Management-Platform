@@ -8,24 +8,21 @@ export function AIPanel({ title = "SMIMP AI", children, status = "active", actio
   // Typing effect animation for string children
   useEffect(() => {
     if (typeof children !== "string") return;
+    
     let index = 0;
     setTypedText("");
     
-    let timerId = null;
-    
-    const typeNextChar = () => {
+    const timerId = setInterval(() => {
       if (index < children.length) {
-        setTypedText((prev) => prev + children.charAt(index));
+        const char = children.charAt(index);
+        setTypedText((prev) => prev + char);
         index++;
-        // Organic typing speed: between 10ms and 35ms per character
-        const delay = Math.random() * 25 + 10;
-        timerId = setTimeout(typeNextChar, delay);
+      } else {
+        clearInterval(timerId);
       }
-    };
+    }, 20);
     
-    typeNextChar();
-    
-    return () => clearTimeout(timerId);
+    return () => clearInterval(timerId);
   }, [children]);
 
   return (

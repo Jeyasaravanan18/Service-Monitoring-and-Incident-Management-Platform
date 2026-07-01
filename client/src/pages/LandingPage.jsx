@@ -32,30 +32,30 @@ export function LandingPage() {
         
         {/* Hero Section */}
         <section className="hero" style={{ marginTop: 40, marginBottom: 60 }}>
-          <h1 style={{ color: "#1e3a8a", letterSpacing: "-1px", lineHeight: 1.1 }}>
-            Build confidence.<br />Get the job.
+          <h1 style={{ color: "var(--color-text)", letterSpacing: "-1.5px", lineHeight: 1.1, fontSize: 52 }}>
+            Build resilience.<br />Protect your uptime.
           </h1>
 
-          <p style={{ color: "#3b82f6", fontWeight: 500, fontSize: 18, marginTop: 24, marginBottom: 40, maxWidth: 600, margin: "24px auto 40px" }}>
-            Explore careers and prepare for the job with hundreds of free job simulations designed by the world's top employers.
+          <p style={{ color: "var(--color-text-soft)", fontWeight: 500, fontSize: 18, marginTop: 24, marginBottom: 40, maxWidth: 640, margin: "24px auto 40px", lineHeight: 1.6 }}>
+            SMIMP is the next-generation service monitoring and incident response platform. Get real-time telemetry, automated alert correlation, dependency topology graphing, and AI-grounded operational insights.
           </p>
 
           <div className="button-row" style={{ justifyContent: "center" }}>
-            <Link className="button primary" style={{ padding: "16px 40px", fontSize: 18, borderRadius: 6 }} to="/auth/register">
-              Get Started &rarr;
+            <Link className="button primary" style={{ padding: "16px 40px", fontSize: 18, borderRadius: 8 }} to="/auth/register">
+              Start Monitoring Free &rarr;
             </Link>
           </div>
         </section>
 
-        {/* Feature logos placeholder */}
+        {/* Feature logos / Integrations section */}
         <section style={{ textAlign: "center", marginTop: 80 }}>
-          <h3 style={{ color: "#1e3a8a", fontSize: 20, marginBottom: 40 }}>Featuring job simulations and jobs from leading companies</h3>
-          <div style={{ display: "flex", justifyContent: "center", gap: 40, opacity: 0.7, flexWrap: "wrap", alignItems: "center" }}>
-            <span style={{ fontSize: 24, fontWeight: 800, color: "#1e3a8a" }}>KPMG</span>
-            <span style={{ fontSize: 24, fontWeight: 800, color: "#0d9488" }}>SIEMENS</span>
-            <span style={{ fontSize: 24, fontWeight: 800, color: "#ea580c" }}>BCLP</span>
-            <span style={{ fontSize: 24, fontWeight: 800, color: "#1e3a8a" }}>pwc</span>
-            <span style={{ fontSize: 24, fontWeight: 800, color: "#166534" }}>BCG</span>
+          <h3 style={{ color: "var(--color-text-soft)", fontSize: 18, marginBottom: 40, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>Grounded Telemetry & Integrations</h3>
+          <div style={{ display: "flex", justifyContent: "center", gap: 50, opacity: 0.6, flexWrap: "wrap", alignItems: "center", fontSize: 20, fontWeight: 800, color: "var(--color-text)" }}>
+            <span>KUBERNETES</span>
+            <span>PROMETHEUS</span>
+            <span>SLACK</span>
+            <span>DATADOG</span>
+            <span>AWS</span>
           </div>
         </section>
 

@@ -4,6 +4,8 @@ import { requireAuth } from "../middleware/auth.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { resolveWorkspaceId } from "../utils/workspace.js";
 
+import env from "../config/env.js";
+
 const router = Router();
 
 router.get("/", requireAuth, asyncHandler(async (req, res) => {
@@ -22,8 +24,11 @@ router.get("/", requireAuth, asyncHandler(async (req, res) => {
       deployments,
       views,
       services,
-      webhooks: [],
-      slack: { ready: false, note: "Slack-ready architecture can be wired with an outbound webhook next." },
+      channels: {
+        slack: !!env.notificationSlackWebhookUrl,
+        email: !!env.resendApiKey && !!env.notificationEmailFrom,
+        webhook: !!env.notificationWebhookUrl,
+      },
     },
   });
 }));

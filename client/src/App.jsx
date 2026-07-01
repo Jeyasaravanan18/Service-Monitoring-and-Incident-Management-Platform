@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AppShell } from "./components/Layout.jsx";
 import { LandingPage } from "./pages/LandingPage.jsx";
 import { LoginPage, ForgotPasswordPage, RegisterPage, ResetPasswordPage, VerifyEmailPage } from "./pages/AuthPages.jsx";
+import { GoogleCallbackPage } from "./pages/GoogleCallbackPage.jsx";
 import { DashboardPage } from "./pages/DashboardPage.jsx";
 import {
   AlertsPage,
@@ -36,8 +37,9 @@ import { ErrorBoundary } from "./components/ErrorBoundary.jsx";
 
 function RequireSession({ children }) {
   const token = useAppStore((state) => state.token);
+  const user = useAppStore((state) => state.user);
   const location = useLocation();
-  if (!token) {
+  if (!token && !user) {
     return <Navigate to="/auth/login" replace state={{ from: location }} />;
   }
   return children;
@@ -71,6 +73,7 @@ function AppRoutes() {
       <Route path="/auth/forgot-password" element={<PublicOnly><ForgotPasswordPage /></PublicOnly>} />
       <Route path="/auth/reset-password" element={<PublicOnly><ResetPasswordPage /></PublicOnly>} />
       <Route path="/auth/verify-email" element={<PublicOnly><VerifyEmailPage /></PublicOnly>} />
+      <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
       <Route path="/status/:subdomain" element={<PublicStatusPage />} />
 
       <Route path="/app" element={<RequireSession><AppShell><DashboardPage /></AppShell></RequireSession>} />

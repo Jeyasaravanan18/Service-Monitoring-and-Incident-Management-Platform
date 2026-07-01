@@ -164,28 +164,30 @@ export function DashboardPage() {
 
           <div className="grid cols-2" style={{ marginTop: 16 }}>
             <Panel title="Service health">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Service</th>
-                    <th>Env</th>
-                    <th>Status</th>
-                    <th>Uptime</th>
-                    <th>Latency</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {services.slice(0, 6).map((service) => (
-                    <tr key={service._id} className={flashingRows[service._id] ? "flash-row" : ""} style={{ transition: "background-color 0.5s ease" }}>
-                      <td><Link to={`/app/services/${service._id}`}>{service.name}</Link></td>
-                      <td><span className="env-badge">{service.environment}</span></td>
-                      <td><HealthPill value={service.healthStatus} /></td>
-                      <td>{Math.round(service.uptimePercentage || 0)}%</td>
-                      <td>{Math.round(service.avgLatencyMs || 0)}ms</td>
+              <div className="table-container">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Service</th>
+                      <th>Env</th>
+                      <th>Status</th>
+                      <th>Uptime</th>
+                      <th>Latency</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {services.slice(0, 6).map((service) => (
+                      <tr key={service._id} className={flashingRows[service._id] ? "flash-row" : ""} style={{ transition: "background-color 0.5s ease" }}>
+                        <td><Link to={`/app/services/${service._id}`}>{service.name}</Link></td>
+                        <td><span className="env-badge">{service.environment}</span></td>
+                        <td><HealthPill value={service.healthStatus} /></td>
+                        <td>{Math.round(service.uptimePercentage || 0)}%</td>
+                        <td>{Math.round(service.avgLatencyMs || 0)}ms</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
               {!services.length ? (
                 <div className="subtle" style={{ marginTop: 12 }}>No services in this workspace yet.</div>
               ) : null}

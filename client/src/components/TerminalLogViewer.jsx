@@ -61,7 +61,7 @@ export function TerminalLogViewer() {
     <>
       <Topbar />
       <PageHeader
-        title="Terminal Logs"
+        title="System Logs"
         copy="Raw streaming telemetry and system output."
       />
       
@@ -69,15 +69,14 @@ export function TerminalLogViewer() {
       
       <div 
         style={{
-          background: "#000000",
-          border: "1px solid var(--color-border)",
+          background: "var(--color-surface-alt)",
+          border: "1px solid var(--color-border-strong)",
           borderRadius: "var(--radius-lg)",
           padding: "16px",
           height: "calc(100vh - 220px)",
           overflowY: "auto",
           fontFamily: "'JetBrains Mono', monospace",
           fontSize: 13,
-          boxShadow: "inset 0 0 20px rgba(0,0,0,0.8)"
         }}
       >
         <div style={{ color: "var(--color-text-soft)", marginBottom: 16 }}>
@@ -94,7 +93,7 @@ export function TerminalLogViewer() {
             <span style={{ color: getLogColor(log.severity), minWidth: 80 }}>
               [{log.severity ? log.severity.toUpperCase() : "INFO"}]
             </span>
-            <span style={{ color: "var(--color-muted)", minWidth: 80 }}>
+            <span style={{ color: "var(--color-text-soft)", minWidth: 80 }}>
               {log.environment || "env"}
             </span>
             <span style={{ color: "var(--color-text)", flex: 1 }}>

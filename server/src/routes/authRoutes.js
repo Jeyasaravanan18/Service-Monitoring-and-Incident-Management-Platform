@@ -1,7 +1,9 @@
 import { Router } from "express";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { z } from "zod";
-import { loginUser, registerUser, revokeRefreshToken, rotateRefreshToken, resendVerificationEmail, resetPasswordWithToken, verifyEmailWithToken, sendPasswordReset } from "../services/authService.js";
+import env from "../config/env.js";
+import { loginUser, registerUser, revokeRefreshToken, rotateRefreshToken, resendVerificationEmail, resetPasswordWithToken, verifyEmailWithToken, sendPasswordReset, loginOrRegisterGoogleUser, linkGoogleAccount } from "../services/authService.js";
+import { getGoogleUserProfile } from "../services/oauthService.js";
 import { requireAuth } from "../middleware/auth.js";
 import { ApiError } from "../utils/apiError.js";
 
@@ -110,6 +112,50 @@ router.post("/resend-verification", asyncHandler(async (req, res) => {
     success: true,
     data: {
       message: "If the account exists, a verification link has been sent.",
+    },
+  });
+}));
+
+// Route for Google Login & Sign Up
+router.get("/google/config", asyncHandler(async (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      clientId: env.googleClientId,
+    },
+  });
+}));
+
+router.post("/google", asyncHandler(async (req, res) => {
+  const payload = z.object({
+    code: z.string(),
+    redirectUri: z.string(),
+  }).parse(req.body);
+
+  const googleProfile = await getGoogleUserProfile(payload.code, payload.redirectUri);
+  const session = await loginOrRegisterGoogleUser(googleProfile);
+
+  res.json({
+    success: true,
+    data: session,
+  });
+}));
+
+// Route for Linking Google to logged-in user profile
+router.post("/google/link", requireAuth, asyncHandler(async (req, res) => {
+  const payload = z.object({
+    code: z.string(),
+    redirectUri: z.string(),
+  }).parse(req.body);
+
+  const googleProfile = await getGoogleUserProfile(payload.code, payload.redirectUri);
+  const user = await linkGoogleAccount(req.auth.sub, googleProfile);
+
+  res.json({
+    success: true,
+    data: {
+      message: "Google Account successfully linked.",
+      googleId: user.googleId,
     },
   });
 }));

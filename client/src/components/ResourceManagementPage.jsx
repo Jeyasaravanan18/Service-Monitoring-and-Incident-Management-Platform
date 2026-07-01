@@ -322,49 +322,51 @@ export function ResourceManagementPage({
           {state.loading ? <div className="subtle">Loading workspace data...</div> : null}
           {state.error ? <div className="subtle">{state.error}</div> : null}
           {!state.loading && !state.error ? (
-            <table className="table">
-              <thead>
-                <tr>
-                  {columns.map((column) => (
-                    <th key={column.key}>{column.label}</th>
-                  ))}
-                  {!disableEdit || !disableDelete ? <th>Actions</th> : null}
-                </tr>
-              </thead>
-              <tbody>
-                {state.data.map((row) => (
-                  <tr key={row._id || row.id || JSON.stringify(row)}>
+            <div className="table-container">
+              <table className="table">
+                <thead>
+                  <tr>
                     {columns.map((column) => (
-                      <td key={column.key}>
-                        {column.key === badgeField ? (
-                          <HealthPill value={row[column.key]} />
-                        ) : column.render ? (
-                          column.render(row)
-                        ) : (
-                          formatCellValue(row[column.key])
-                        )}
-                      </td>
+                      <th key={column.key}>{column.label}</th>
                     ))}
-                    {!disableEdit || !disableDelete ? (
-                      <td>
-                        <div className="button-row">
-                          {!disableEdit ? (
-                            <button className="button" type="button" onClick={() => startEdit(row)}>
-                              Edit
-                            </button>
-                          ) : null}
-                          {!disableDelete ? (
-                            <button className="button" type="button" onClick={() => handleDelete(row)}>
-                              Delete
-                            </button>
-                          ) : null}
-                        </div>
-                      </td>
-                    ) : null}
+                    {!disableEdit || !disableDelete ? <th>Actions</th> : null}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {state.data.map((row) => (
+                    <tr key={row._id || row.id || JSON.stringify(row)}>
+                      {columns.map((column) => (
+                        <td key={column.key}>
+                          {column.key === badgeField ? (
+                            <HealthPill value={row[column.key]} />
+                          ) : column.render ? (
+                            column.render(row)
+                          ) : (
+                            formatCellValue(row[column.key])
+                          )}
+                        </td>
+                      ))}
+                      {!disableEdit || !disableDelete ? (
+                        <td>
+                          <div className="button-row" style={{ flexWrap: "nowrap" }}>
+                            {!disableEdit ? (
+                              <button className="button" type="button" onClick={() => startEdit(row)}>
+                                Edit
+                              </button>
+                            ) : null}
+                            {!disableDelete ? (
+                              <button className="button" type="button" onClick={() => handleDelete(row)}>
+                                Delete
+                              </button>
+                            ) : null}
+                          </div>
+                        </td>
+                      ) : null}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : null}
           {!state.loading && !state.error && !state.data.length ? (
             <div className="subtle" style={{ marginTop: 12 }}>

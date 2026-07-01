@@ -13,7 +13,8 @@ const server = createServer((req, res) => {
     return;
   }
 
-  const urlPath = req.url === "/" ? "/index.html" : req.url;
+  const pathname = req.url.split("?")[0];
+  const urlPath = pathname === "/" ? "/index.html" : pathname;
   const filePath = path.join(outdir, decodeURIComponent(urlPath || "/"));
 
   try {

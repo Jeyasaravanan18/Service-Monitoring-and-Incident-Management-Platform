@@ -145,6 +145,7 @@ async function buildSession(user) {
       workspaceRoles: user.workspaceRoles,
       workspaceIds: user.workspaceIds,
       emailVerifiedAt: user.emailVerifiedAt || null,
+      googleId: user.googleId || null,
     },
     accessToken,
     refreshToken,
@@ -256,4 +257,66 @@ export async function resendVerificationEmail(email) {
   if (!user) return;
   if (user.emailVerifiedAt) return;
   await issueVerificationToken(user);
+}
+
+export async function loginOrRegisterGoogleUser(googleProfile) {
+  let user = await User.findOne({ googleId: googleProfile.sub });
+  
+  if (!user) {
+    user = await User.findOne({ email: googleProfile.email.toLowerCase() });
+    if (user) {
+      user.googleId = googleProfile.sub;
+      if (!user.emailVerifiedAt) {
+        user.emailVerifiedAt = new Date();
+      }
+      await user.save();
+    } else {
+      const workspace = await Workspace.create({
+        name: `${googleProfile.name}'s Workspace`,
+        slug: `workspace-${Date.now()}-${nanoid(4)}`,
+        plan: "free",
+      });
+
+      user = await User.create({
+        email: googleProfile.email.toLowerCase(),
+        name: googleProfile.name,
+        googleId: googleProfile.sub,
+        roles: ["admin"],
+        workspaceIds: [workspace._id],
+        workspaceRoles: [
+          {
+            workspaceId: workspace._id,
+            role: "admin",
+          }
+        ],
+        emailVerifiedAt: new Date(),
+      });
+
+      workspace.ownerId = user._id;
+      await workspace.save();
+    }
+  }
+
+  user.lastLoginAt = new Date();
+  await user.save();
+  return await buildSession(user);
+}
+
+export async function linkGoogleAccount(userId, googleProfile) {
+  const existingLink = await User.findOne({ googleId: googleProfile.sub });
+  if (existingLink && existingLink._id.toString() !== userId.toString()) {
+    throw new ApiError(400, "This Google account is already linked to another user.");
+  }
+
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new ApiError(404, "User not found.");
+  }
+
+  user.googleId = googleProfile.sub;
+  if (!user.emailVerifiedAt) {
+    user.emailVerifiedAt = new Date();
+  }
+  await user.save();
+  return user;
 }

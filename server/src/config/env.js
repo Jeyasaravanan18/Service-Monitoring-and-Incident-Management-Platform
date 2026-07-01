@@ -54,6 +54,8 @@ const env = {
   notificationEmailFrom: process.env.NOTIFICATION_EMAIL_FROM || "",
   notificationWebhookUrl: process.env.NOTIFICATION_WEBHOOK_URL || "",
   notificationSlackWebhookUrl: process.env.NOTIFICATION_SLACK_WEBHOOK_URL || "",
+  googleClientId: process.env.GOOGLE_CLIENT_ID || "",
+  googleClientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
 };
 
 export default env;

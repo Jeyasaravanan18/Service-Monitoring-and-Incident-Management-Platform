@@ -982,6 +982,16 @@ export function NotificationsPage() {
 }
 
 export function IntegrationPage() {
+  const [channels, setChannels] = useState({ slack: false, email: false, webhook: false });
+
+  useEffect(() => {
+    apiGet("/integrations")
+      .then((res) => {
+        if (res.data?.channels) setChannels(res.data.channels);
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <ResourceManagementPage
       title="Integrations and API keys"
@@ -990,6 +1000,34 @@ export function IntegrationPage() {
       createLabel="Create API key"
       updateLabel="Save API key"
       itemLabel="API key"
+      extraSummary={() => (
+        <>
+          <Panel title="Slack Webhook">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span className="subtle" style={{ fontSize: 13 }}>Slack notifications channel.</span>
+              <span className={`badge ${channels.slack ? "" : "badge--warning"}`} style={{ background: channels.slack ? "var(--color-brand)" : undefined, color: channels.slack ? "#ffffff" : undefined }}>
+                {channels.slack ? "Active" : "Not Configured"}
+              </span>
+            </div>
+          </Panel>
+          <Panel title="Email (Resend)">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span className="subtle" style={{ fontSize: 13 }}>Outbound email delivery.</span>
+              <span className={`badge ${channels.email ? "" : "badge--warning"}`} style={{ background: channels.email ? "var(--color-brand)" : undefined, color: channels.email ? "#ffffff" : undefined }}>
+                {channels.email ? "Active" : "Not Configured"}
+              </span>
+            </div>
+          </Panel>
+          <Panel title="Outbound Webhooks">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span className="subtle" style={{ fontSize: 13 }}>Outbound webhook dispatcher.</span>
+              <span className={`badge ${channels.webhook ? "" : "badge--warning"}`} style={{ background: channels.webhook ? "var(--color-brand)" : undefined, color: channels.webhook ? "#ffffff" : undefined }}>
+                {channels.webhook ? "Active" : "Not Configured"}
+              </span>
+            </div>
+          </Panel>
+        </>
+      )}
       columns={[
         { key: "name", label: "Key name" },
         { key: "scopes", label: "Scopes", render: (row) => (row.scopes || []).join(", ") || "-" },
@@ -1005,18 +1043,41 @@ export function IntegrationPage() {
   );
 }
 
+import { useAppStore } from "../store/useAppStore.js";
+import { redirectToGoogle } from "../lib/oauth.js";
+
 export function ProfilePage() {
   const navigate = useNavigate();
+  const addToast = useAppStore((state) => state.addToast);
   const [overview, setOverview] = useState({ services: [], alerts: [], incidents: [], logs: [] });
   const [workspaces, setWorkspaces] = useState([]);
-  const session = JSON.parse(localStorage.getItem("smimp-session") || "null");
+  const [resending, setResending] = useState(false);
+  const session = JSON.parse(localStorage.getItem("smimp-user") || "null");
   const user = session?.user;
   const activeWorkspaceId = session?.workspaceId || user?.workspaceIds?.[0] || null;
+  const googleLinked = !!user?.googleId;
 
   useEffect(() => {
     apiGet("/dashboard/overview").then((response) => setOverview(response.data || { services: [], alerts: [], incidents: [], logs: [] }));
     apiGet("/workspaces").then((response) => setWorkspaces(response.data || [])).catch(() => setWorkspaces([]));
   }, []);
+
+  const handleResendVerification = async () => {
+    if (!user?.email) return;
+    setResending(true);
+    try {
+      await apiPost("/auth/resend-verification", { email: user.email });
+      addToast("Verification link sent! Check your inbox.", "success");
+    } catch (err) {
+      addToast(err.message || "Failed to send verification link.", "error");
+    } finally {
+      setResending(false);
+    }
+  };
+
+  const handleLinkGoogle = () => {
+    redirectToGoogle("link");
+  };
 
   const services = overview.services || [];
   const alerts = overview.alerts || [];
@@ -1034,7 +1095,6 @@ export function ProfilePage() {
       <PageHeader
         title="Profile"
         copy="Review the active user session and personal workspace context."
-        action={<button className="button primary" onClick={() => navigate("/auth/login")}>Switch account</button>}
       />
       <div className="grid cols-3">
         {metrics.map((item) => (
@@ -1043,20 +1103,51 @@ export function ProfilePage() {
       </div>
       <div className="grid cols-2" style={{ marginTop: 16 }}>
         <Panel title="Current session">
-          <div className="grid" style={{ gap: 10 }}>
-            <div>Name: {user?.name || "Unknown"}</div>
-            <div>Email: {user?.email || "Unknown"}</div>
-            <div>Roles: {(user?.roles || []).join(", ") || "-"}</div>
-            <div>Workspace role: {(user?.workspaceRoles || []).find((item) => String(item.workspaceId) === String(activeWorkspaceId))?.role || user?.roles?.[0] || "viewer"}</div>
-            <div>Workspace IDs: {(user?.workspaceIds || []).join(", ") || "-"}</div>
-            <div>Email verified: {user?.emailVerifiedAt ? new Date(user.emailVerifiedAt).toLocaleString() : "Not verified yet"}</div>
+          <div className="grid" style={{ gap: 14 }}>
+            <div><strong>Name:</strong> {user?.name || "Unknown"}</div>
+            <div><strong>Email:</strong> {user?.email || "Unknown"}</div>
+            <div><strong>Roles:</strong> {(user?.roles || []).join(", ") || "-"}</div>
+            <div><strong>Workspace role:</strong> {(user?.workspaceRoles || []).find((item) => String(item.workspaceId) === String(activeWorkspaceId))?.role || user?.roles?.[0] || "viewer"}</div>
+            <div><strong>Workspace IDs:</strong> {(user?.workspaceIds || []).join(", ") || "-"}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+              <span><strong>Email verified:</strong> {user?.emailVerifiedAt ? new Date(user.emailVerifiedAt).toLocaleString() : "Not verified yet"}</span>
+              {!user?.emailVerifiedAt && (
+                <button 
+                  className="button primary" 
+                  style={{ padding: "6px 12px", fontSize: 12, borderRadius: 6 }} 
+                  onClick={handleResendVerification}
+                  disabled={resending}
+                >
+                  {resending ? "Sending..." : "Verify email"}
+                </button>
+              )}
+            </div>
           </div>
         </Panel>
-        <Panel title="Security notes">
-          <div className="subtle">
-            Password reset, email verification, and token refresh flows are available on this account. Logout revokes the refresh token locally and server-side.
-          </div>
-        </Panel>
+        <div className="grid" style={{ gap: 16 }}>
+          <Panel title="Single Sign-On (SSO) & OAuth">
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px", background: "var(--color-surface-alt)", borderRadius: "8px" }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 14 }}>Google Account Connection</div>
+                  <div className="subtle" style={{ fontSize: 12 }}>{googleLinked ? `Linked as ${user?.email}` : "Not linked"}</div>
+                </div>
+                <button 
+                  className={`button ${googleLinked ? "" : "primary"}`} 
+                  style={{ padding: "8px 14px", fontSize: 12, borderRadius: 6 }}
+                  onClick={handleLinkGoogle}
+                >
+                  {googleLinked ? "Reconnect" : "Connect"}
+                </button>
+              </div>
+            </div>
+          </Panel>
+          <Panel title="Security notes">
+            <div className="subtle" style={{ lineHeight: "1.6" }}>
+              Password reset, email verification, and token refresh flows are available on this account. Logout revokes the refresh token locally and server-side.
+            </div>
+          </Panel>
+        </div>
       </div>
     </>
   );
@@ -1462,23 +1553,34 @@ export function AnalyticsPage() {
 export function DependencyGraphPage() {
   const [services, setServices] = useState([]);
   const [dependencies, setDependencies] = useState([]);
+  const [sourceId, setSourceId] = useState("");
+  const [targetId, setTargetId] = useState("");
+  const [relationType, setRelationType] = useState("hard");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const addToast = useAppStore((state) => state.addToast);
 
-  useEffect(() => {
+  const fetchGraphData = () => {
     Promise.all([apiGet("/services"), apiGet("/dependencies")]).then(([servicesResponse, dependencyResponse]) => {
       setServices(servicesResponse.data || []);
       setDependencies(dependencyResponse.data || []);
     });
+  };
+
+  useEffect(() => {
+    fetchGraphData();
   }, []);
 
   const graph = useMemo(() => {
     const nodes = services.map((service, index) => ({
       ...service,
-      x: 80 + (index % 3) * 260,
-      y: 90 + Math.floor(index / 3) * 140,
+      x: 30 + (index % 2) * 230,
+      y: 40 + Math.floor(index / 2) * 120,
     }));
     const nodeMap = new Map(nodes.map((node) => [String(node._id), node]));
     const edges = dependencies
       .map((dependency) => ({
+        _id: dependency._id,
         source: nodeMap.get(String(dependency.serviceId)),
         target: nodeMap.get(String(dependency.dependsOnServiceId)),
         relationType: dependency.relationType || "hard",
@@ -1487,43 +1589,166 @@ export function DependencyGraphPage() {
     return { nodes, edges };
   }, [services, dependencies]);
 
+  const handleAddDependency = async (e) => {
+    e.preventDefault();
+    if (!sourceId || !targetId) {
+      setError("Please select both services");
+      return;
+    }
+    if (sourceId === targetId) {
+      setError("A service cannot depend on itself");
+      return;
+    }
+    setSubmitting(true);
+    setError("");
+    try {
+      await apiPost("/dependencies", {
+        serviceId: sourceId,
+        dependsOnServiceId: targetId,
+        relationType,
+      });
+      addToast("Dependency link successfully created!", "success");
+      setSourceId("");
+      setTargetId("");
+      fetchGraphData();
+    } catch (err) {
+      setError(err.message || "Failed to create dependency link.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteDependency = async (id) => {
+    if (!window.confirm("Remove this dependency edge?")) return;
+    try {
+      await apiDelete(`/dependencies/${id}`);
+      addToast("Dependency link removed.", "info");
+      fetchGraphData();
+    } catch (err) {
+      addToast(err.message || "Failed to delete dependency link.", "error");
+    }
+  };
+
   return (
     <>
       <Topbar />
       <PageHeader title="Dependency graph" copy="A live topology map of service relationships and dependency edges." />
-      <Panel title="Topology map">
-        {graph.nodes.length ? (
-          <div style={{ overflowX: "auto" }}>
-            <svg width={920} height={Math.max(260, Math.ceil(graph.nodes.length / 3) * 150)} viewBox={`0 0 920 ${Math.max(260, Math.ceil(graph.nodes.length / 3) * 150)}`}>
-              {graph.edges.map((edge, index) => (
-                <line
-                  key={`${edge.source._id}-${edge.target._id}-${index}`}
-                  x1={edge.source.x + 90}
-                  y1={edge.source.y + 28}
-                  x2={edge.target.x + 90}
-                  y2={edge.target.y + 28}
-                  stroke="#6fae7f"
-                  strokeWidth="2"
-                  strokeDasharray={edge.relationType === "soft" ? "6 6" : "0"}
-                />
-              ))}
-              {graph.nodes.map((service) => (
-                <g key={service._id} transform={`translate(${service.x}, ${service.y})`}>
-                  <rect width="180" height="56" rx="14" fill="var(--panel)" stroke="var(--border)" />
-                  <text x="14" y="24" fill="var(--text)" fontSize="14" fontWeight="700">
-                    {service.name}
-                  </text>
-                  <text x="14" y="42" fill="var(--muted)" fontSize="11">
-                    {service.environment} · {Math.round(service.avgLatencyMs || 0)}ms
-                  </text>
-                </g>
-              ))}
-            </svg>
-          </div>
-        ) : (
-          <div className="subtle">No services or dependency edges have been created yet.</div>
-        )}
-      </Panel>
+      <div className="grid" style={{ gridTemplateColumns: "3fr 2fr", gap: 16 }}>
+        <Panel title="Topology map">
+          {graph.nodes.length ? (
+            <div style={{ overflowX: "auto" }}>
+              <svg width={500} height={Math.max(260, Math.ceil(graph.nodes.length / 2) * 130)} viewBox={`0 0 500 ${Math.max(260, Math.ceil(graph.nodes.length / 2) * 130)}`}>
+                {graph.edges.map((edge, index) => (
+                  <line
+                    key={`${edge.source._id}-${edge.target._id}-${index}`}
+                    x1={edge.source.x + 90}
+                    y1={edge.source.y + 28}
+                    x2={edge.target.x + 90}
+                    y2={edge.target.y + 28}
+                    stroke="var(--color-brand)"
+                    strokeWidth="2"
+                    strokeDasharray={edge.relationType === "soft" ? "6 6" : "0"}
+                    opacity="0.4"
+                  />
+                ))}
+                {graph.nodes.map((service) => (
+                  <g key={service._id} transform={`translate(${service.x}, ${service.y})`}>
+                    <rect width="180" height="56" rx="14" fill="var(--color-surface)" stroke="var(--color-border-strong)" strokeWidth="1.5" />
+                    <text x="14" y="24" fill="var(--color-text)" fontSize="13" fontWeight="700">
+                      {service.name}
+                    </text>
+                    <text x="14" y="42" fill="var(--color-text-soft)" fontSize="10" fontWeight="600">
+                      {service.environment} · {Math.round(service.avgLatencyMs || 0)}ms
+                    </text>
+                  </g>
+                ))}
+              </svg>
+            </div>
+          ) : (
+            <div className="subtle">No services or dependency edges have been created yet.</div>
+          )}
+        </Panel>
+
+        <div className="grid" style={{ gap: 16, alignContent: "start" }}>
+          <Panel title="Link Services">
+            <form className="grid" style={{ gap: 12 }} onSubmit={handleAddDependency}>
+              <label className="field-block">
+                <span className="field-label">Source Service</span>
+                <select className="search" value={sourceId} onChange={(e) => setSourceId(e.target.value)}>
+                  <option value="">Select service...</option>
+                  {services.map((s) => (
+                    <option key={s._id} value={s._id}>{s.name}</option>
+                  ))}
+                </select>
+              </label>
+              
+              <label className="field-block">
+                <span className="field-label">Depends On</span>
+                <select className="search" value={targetId} onChange={(e) => setTargetId(e.target.value)}>
+                  <option value="">Select dependency...</option>
+                  {services.map((s) => (
+                    <option key={s._id} value={s._id}>{s.name}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="field-block">
+                <span className="field-label">Relation Type</span>
+                <select className="search" value={relationType} onChange={(e) => setRelationType(e.target.value)}>
+                  <option value="hard">Hard (Critical Path)</option>
+                  <option value="soft">Soft (Non-blocking)</option>
+                </select>
+              </label>
+
+              {error && <div className="subtle" style={{ color: "var(--color-danger)" }}>{error}</div>}
+
+              <button className="button primary" type="submit" disabled={submitting}>
+                {submitting ? "Linking..." : "Add Dependency Edge"}
+              </button>
+            </form>
+          </Panel>
+
+          <Panel title="Active Connections">
+            <div className="table-container" style={{ maxHeight: "300px", overflowY: "auto" }}>
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Edge</th>
+                    <th>Type</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {graph.edges.map((edge) => (
+                    <tr key={edge._id}>
+                      <td style={{ fontSize: 13 }}>
+                        <strong>{edge.source.name}</strong> &rarr; <strong>{edge.target.name}</strong>
+                      </td>
+                      <td style={{ fontSize: 12 }}>
+                        <span className={`badge ${edge.relationType === "hard" ? "badge--danger" : "badge--warning"}`}>
+                          {edge.relationType}
+                        </span>
+                      </td>
+                      <td>
+                        <button className="button" style={{ padding: "4px 8px", fontSize: 11 }} onClick={() => handleDeleteDependency(edge._id)}>
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {!graph.edges.length && (
+                    <tr>
+                      <td colSpan="3" className="subtle" style={{ textAlign: "center", padding: 12 }}>
+                        No active dependency links.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Panel>
+        </div>
+      </div>
       <div className="grid cols-3" style={{ marginTop: 16 }}>
         <MetricCard label="Services" value={String(services.length)} trend={`${dependencies.length} dependency edges`} />
         <MetricCard label="Healthy" value={String(services.filter((service) => service.healthStatus === "healthy").length)} trend="Live health state" />
@@ -1609,23 +1834,43 @@ export function AIInsightsPage() {
               <button className="button primary" onClick={() => runInsight("incident")} type="button">Generate incident summary</button>
               <button className="button" onClick={() => runInsight("service")} type="button">Generate service trend</button>
             </div>
-            {message ? <div className="subtle">{message}</div> : null}
+            {message ? <div className="subtle" style={{ whiteSpace: "pre-wrap", marginTop: 12, lineHeight: "1.6" }}>{message}</div> : null}
           </div>
         </Panel>
         <Panel title="Recent insights">
-          {state.loading ? <div className="subtle">Loading insights...</div> : null}
-          {state.error ? <div className="subtle">{state.error}</div> : null}
-          {(state.data || []).map((insight) => (
-            <div key={insight._id} className="panel" style={{ background: "var(--panel-muted)", marginBottom: 12 }}>
-              <div>{insight.title}</div>
-              <div className="subtle">{insight.type}</div>
-              <div style={{ marginTop: 8 }}>{insight.body}</div>
-            </div>
-          ))}
-          {!state.loading && !state.data.length ? <div className="subtle">No AI insights generated yet.</div> : null}
+          <div style={{ maxHeight: "580px", overflowY: "auto", paddingRight: "8px" }}>
+            {state.loading ? <div className="subtle">Loading insights...</div> : null}
+            {state.error ? <div className="subtle">{state.error}</div> : null}
+            {(state.data || []).map((insight) => {
+              const formatMarkdown = (text) => {
+                if (!text) return "";
+                // Escape basic HTML to prevent XSS
+                let html = text
+                  .replace(/&/g, "&amp;")
+                  .replace(/</g, "&lt;")
+                  .replace(/>/g, "&gt;");
+                // Match headers (### Title)
+                html = html.replace(/^### (.*?)$/gm, '<h4 style="font-size: 16px; font-weight: 800; margin: 18px 0 8px; color: var(--color-text);">$1</h4>');
+                // Match bold text (**bold**)
+                html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+                // Match italic text (*italic*)
+                html = html.replace(/\*(.*?)\*/g, "<em>$1</em>");
+                return <div style={{ whiteSpace: "pre-wrap", lineHeight: "1.6", marginTop: 8 }} dangerouslySetInnerHTML={{ __html: html }} />;
+              };
+
+              return (
+                <div key={insight._id} className="panel" style={{ background: "var(--color-surface-alt)", marginBottom: 16, border: "1px solid var(--color-border)" }}>
+                  <div style={{ fontSize: 18, fontWeight: 800 }}>{insight.title}</div>
+                  <div className="subtle" style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 2 }}>{insight.type}</div>
+                  {formatMarkdown(insight.body)}
+                </div>
+              );
+            })}
+            {!state.loading && !state.data.length ? <div className="subtle">No AI insights generated yet.</div> : null}
+          </div>
         </Panel>
         <Panel title="Positioning">
-          <div className="subtle">
+          <div className="subtle" style={{ lineHeight: "1.6" }}>
             The AI layer stays grounded in incident, alert, log, and service records. When evidence is thin, the summary stays cautious instead of inventing a story.
           </div>
         </Panel>
