@@ -66,7 +66,16 @@ This mitigates XSS attacks while providing a seamless login experience. All endp
 The AI Postmortem feature doesn't crash if the Google Gemini API key is missing or if the API rate-limits. It implements a fallback heuristic function that analyzes the raw data arrays and dynamically generates a text-based summary locally.
 
 ### 5. High-Performance UX (Command Palette & Skeletons)
-To cater to power-users, the platform features a global fuzzy-search Command Palette (`Ctrl+K`). Asynchronous data fetching is masked by smooth, animated skeleton loaders rather than jarring spinners.
+To cater to power-users, the platform features a global fuzzy-search Command Palette (`Ctrl+K`). Asynchronous data fetching is masked by smooth, animated skeleton loaders rather than jarring spinners. Unbounded list endpoints utilize **pagination** to optimize performance.
+
+### 6. Security and Data Integrity
+- **Cascading Cleanup:** Automatic recursive deletion of all related metrics, logs, incidents, and alerts when a service is deleted.
+- **Encryption at Rest:** Sensitive configuration fields like `Service.apiKey` are encrypted at rest using AES-256-GCM.
+- **SSRF Protection:** Webhooks and status checks actively block private IP ranges. To bypass this for internal networks, `ALLOW_INTERNAL_TARGETS=true` must be configured.
+- **Comprehensive Audit Logging:** Every mutating route operation is tracked via a robust audit logging system.
+
+### 7. Reliability
+Code is covered by a suite of **integration tests** using Jest, Supertest, and an in-memory MongoDB setup to ensure logic regressions (like cascading deletions) are caught early.
 
 ---
 
@@ -94,6 +103,8 @@ To cater to power-users, the platform features a global fuzzy-search Command Pal
    JWT_REFRESH_SECRET=your_super_secret_refresh_key
    GEMINI_API_KEY=your_google_gemini_key
    APP_NAME=Service Monitoring and Incident Management Platform
+   ENCRYPTION_KEY=a_32_byte_hex_string_here
+   ALLOW_INTERNAL_TARGETS=false
    ```
 
 3. **Start the Platform:**
