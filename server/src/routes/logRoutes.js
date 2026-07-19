@@ -16,9 +16,16 @@ router.get("/", requireAuth, asyncHandler(async (req, res) => {
   if (req.query.severity) filter.severity = req.query.severity;
   if (req.query.incidentId) filter.incidentId = req.query.incidentId;
   if (req.query.keyword) filter.message = { $regex: req.query.keyword, $options: "i" };
-  const limit = Math.min(Number(req.query.limit || 100) || 100, 500);
-  const logs = await LogEntry.find(filter).sort({ occurredAt: -1 }).limit(limit).lean();
-  res.json({ success: true, data: logs });
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 100));
+  const skip = (page - 1) * limit;
+
+  const [logs, total] = await Promise.all([
+    LogEntry.find(filter).sort({ occurredAt: -1 }).skip(skip).limit(limit).lean(),
+    LogEntry.countDocuments(filter),
+  ]);
+
+  res.json({ success: true, data: logs, meta: { total, page, limit } });
 }));
 
 router.post("/ingest", requireIngestionAccess("logs:write", ["super-admin", "admin", "engineer"]), asyncHandler(async (req, res) => {

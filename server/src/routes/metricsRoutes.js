@@ -18,8 +18,19 @@ const metricSchema = z.object({
 const router = Router();
 
 router.get("/", requireAuth, asyncHandler(async (req, res) => {
-  const metrics = await Metric.find({ workspaceId: { $in: req.auth.workspaceIds || [] } }).sort({ recordedAt: -1 }).lean();
-  res.json({ success: true, data: metrics });
+  const filter = { workspaceId: { $in: req.auth.workspaceIds || [] } };
+  if (req.query.serviceId) filter.serviceId = req.query.serviceId;
+  
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 100));
+  const skip = (page - 1) * limit;
+
+  const [metrics, total] = await Promise.all([
+    Metric.find(filter).sort({ recordedAt: -1 }).skip(skip).limit(limit).lean(),
+    Metric.countDocuments(filter),
+  ]);
+
+  res.json({ success: true, data: metrics, meta: { total, page, limit } });
 }));
 
 router.post("/", requireIngestionAccess("metrics:write", ["super-admin", "admin", "engineer"]), asyncHandler(async (req, res) => {
