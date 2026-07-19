@@ -6,6 +6,7 @@ import { Alert, AlertRule, Incident } from "../models/index.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { escalateAlert } from "../services/escalationService.js";
 import { emitRealtime } from "../services/realtimeService.js";
+import { recordAuditLog } from "../services/auditService.js";
 import { resolveWorkspaceId } from "../utils/workspace.js";
 
 const ruleSchema = z.object({
@@ -36,6 +37,14 @@ router.post("/rules", requireAuth, requireRole(["super-admin", "admin"]), asyncH
   const payload = ruleSchema.parse(req.body);
   const workspaceId = resolveWorkspaceId(req);
   const rule = await AlertRule.create({ ...payload, workspaceId });
+  await recordAuditLog({
+    workspaceId,
+    actorId: req.auth.sub,
+    action: "alert_rule.create",
+    resourceType: "alert_rule",
+    resourceId: rule._id,
+    details: { name: rule.name },
+  });
   res.status(201).json({ success: true, data: rule });
 }));
 
@@ -44,6 +53,14 @@ router.patch("/rules/:id", requireAuth, requireRole(["super-admin", "admin"]), a
   const workspaceId = resolveWorkspaceId(req);
   const rule = await AlertRule.findOneAndUpdate({ _id: req.params.id, workspaceId }, { $set: payload }, { new: true });
   if (!rule) throw new ApiError(404, "Alert rule not found");
+  await recordAuditLog({
+    workspaceId,
+    actorId: req.auth.sub,
+    action: "alert_rule.update",
+    resourceType: "alert_rule",
+    resourceId: rule._id,
+    details: payload,
+  });
   res.json({ success: true, data: rule });
 }));
 
@@ -51,6 +68,14 @@ router.delete("/rules/:id", requireAuth, requireRole(["super-admin", "admin"]), 
   const workspaceId = resolveWorkspaceId(req);
   const rule = await AlertRule.findOneAndDelete({ _id: req.params.id, workspaceId });
   if (!rule) throw new ApiError(404, "Alert rule not found");
+  await recordAuditLog({
+    workspaceId,
+    actorId: req.auth.sub,
+    action: "alert_rule.delete",
+    resourceType: "alert_rule",
+    resourceId: rule._id,
+    details: { name: rule.name },
+  });
   res.json({ success: true, data: rule });
 }));
 

@@ -4,6 +4,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import { MaintenanceWindow } from "../models/index.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
+import { recordAuditLog } from "../services/auditService.js";
 import { resolveWorkspaceId } from "../utils/workspace.js";
 
 const maintenanceSchema = z.object({
@@ -34,6 +35,14 @@ router.post("/", requireAuth, requireRole(["super-admin", "admin"]), asyncHandle
     reason: payload.reason,
     active: payload.active,
   });
+  await recordAuditLog({
+    workspaceId,
+    actorId: req.auth.sub,
+    action: "maintenance_window.create",
+    resourceType: "maintenance_window",
+    resourceId: window._id,
+    details: { name: window.name },
+  });
   res.status(201).json({ success: true, data: window });
 }));
 
@@ -45,6 +54,14 @@ router.patch("/:id", requireAuth, requireRole(["super-admin", "admin"]), asyncHa
   if (payload.endsAt) update.endsAt = new Date(payload.endsAt);
   const window = await MaintenanceWindow.findOneAndUpdate({ _id: req.params.id, workspaceId }, { $set: update }, { new: true });
   if (!window) throw new ApiError(404, "Maintenance window not found");
+  await recordAuditLog({
+    workspaceId,
+    actorId: req.auth.sub,
+    action: "maintenance_window.update",
+    resourceType: "maintenance_window",
+    resourceId: window._id,
+    details: payload,
+  });
   res.json({ success: true, data: window });
 }));
 
@@ -52,6 +69,14 @@ router.delete("/:id", requireAuth, requireRole(["super-admin", "admin"]), asyncH
   const workspaceId = resolveWorkspaceId(req);
   const window = await MaintenanceWindow.findOneAndDelete({ _id: req.params.id, workspaceId });
   if (!window) throw new ApiError(404, "Maintenance window not found");
+  await recordAuditLog({
+    workspaceId,
+    actorId: req.auth.sub,
+    action: "maintenance_window.delete",
+    resourceType: "maintenance_window",
+    resourceId: window._id,
+    details: { name: window.name },
+  });
   res.json({ success: true, data: window });
 }));
 
