@@ -2,8 +2,9 @@ import { Router } from "express";
 import { z } from "zod";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
-import { CheckResult, DeploymentEvent, Incident, LogEntry, Metric, Service, ServiceDependency, Alert } from "../models/index.js";
+import { CheckResult, DeploymentEvent, Incident, LogEntry, Metric, Service, ServiceDependency, Alert, AlertRule, SLOTarget } from "../models/index.js";
 import { computeHealthScore } from "../utils/health.js";
+import logger from "../config/logger.js";
 import { requireAuth, requireRole } from "../middleware/auth.js";
 import { recordAuditLog } from "../services/auditService.js";
 import { emitRealtime } from "../services/realtimeService.js";
@@ -127,6 +128,33 @@ router.delete("/:id", requireAuth, requireRole(["super-admin", "admin"]), asyncH
     details: { name: service.name },
   });
   emitRealtime("service:updated", { serviceId: service._id.toString(), workspaceId, action: "deleted" });
+  try {
+    const cascadeResults = await Promise.all([
+      CheckResult.deleteMany({ serviceId: service._id }),
+      Metric.deleteMany({ serviceId: service._id }),
+      LogEntry.deleteMany({ serviceId: service._id }),
+      Alert.deleteMany({ serviceId: service._id }),
+      AlertRule.deleteMany({ serviceId: service._id }),
+      DeploymentEvent.deleteMany({ serviceId: service._id }),
+      ServiceDependency.deleteMany({ $or: [{ serviceId: service._id }, { dependsOnServiceId: service._id }] }),
+      SLOTarget.deleteMany({ serviceId: service._id }),
+    ]);
+    
+    await recordAuditLog({
+      workspaceId,
+      actorId: req.auth.sub,
+      action: "service.cleanup",
+      resourceType: "service",
+      resourceId: service._id,
+      details: {
+        message: "Cascade cleanup executed",
+        counts: cascadeResults.map(r => r.deletedCount)
+      },
+    });
+  } catch (err) {
+    logger.error("Failed to perform cascade cleanup for service %s: %s", service._id, err.message);
+  }
+
   res.json({ success: true, data: service });
 }));
 
