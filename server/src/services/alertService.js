@@ -1,4 +1,4 @@
-import { Alert, AlertRule, Incident } from "../models/index.js";
+import { Alert, AlertRule, Incident, ServiceDependency, Service } from "../models/index.js";
 import { createWorkspaceNotification } from "./notificationService.js";
 import { emitRealtime } from "./realtimeService.js";
 import { scheduleEscalation } from "./escalationService.js";
@@ -48,6 +48,24 @@ async function upsertAlert(service, rule) {
   });
   if (existing) return existing;
 
+  const upstreamDeps = await ServiceDependency.find({
+    serviceId: service._id,
+  }).lean();
+
+  const upstreamServices = await Service.find({
+    _id: { $in: upstreamDeps.map((d) => d.dependsOnServiceId) },
+  }).lean();
+
+  const unhealthyUpstreams = upstreamServices.filter(
+    (s) => s.healthStatus === "critical" || s.healthStatus === "degraded"
+  );
+
+  let summary = `Threshold ${rule.threshold} breached with current service metrics.`;
+  if (unhealthyUpstreams.length > 0) {
+    const upstreamNames = unhealthyUpstreams.map((s) => s.name).join(", ");
+    summary += ` AI Summary: The current failure is likely cascading from upstream dependency failures: ${upstreamNames}.`;
+  }
+
   const alert = await Alert.create({
     workspaceId: service.workspaceId,
     serviceId: service._id,
@@ -55,7 +73,7 @@ async function upsertAlert(service, rule) {
     title: `${service.name} breached ${rule.type} rule`,
     severity: rule.severity,
     dedupeKey,
-    summary: `Threshold ${rule.threshold} breached with current service metrics.`,
+    summary,
     meta: {
       threshold: rule.threshold,
       current: {
