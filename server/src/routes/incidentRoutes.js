@@ -87,6 +87,9 @@ router.post("/:id/notes", requireAuth, requireRole(["super-admin", "admin", "eng
   const payload = noteSchema.parse(req.body);
   const incident = await Incident.findOne({ _id: req.params.id, workspaceId });
   if (!incident) throw new ApiError(404, "Incident not found");
+  if (incident.notes && incident.notes.length >= 500) {
+    throw new ApiError(400, "Note limit reached — resolve or archive this incident");
+  }
   incident.notes.push({ body: payload.body, authorId: payload.authorId || req.auth.sub, createdAt: new Date() });
   await incident.save();
   emitRealtime("incident:note", { incidentId: incident._id.toString(), note: payload.body.slice(0, 120) });
